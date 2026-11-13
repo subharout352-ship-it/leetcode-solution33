@@ -1,0 +1,80 @@
+
+class Solution(object):
+    def findMinStep(self, board, hand):
+        """
+        :type board: str
+        :type hand: str
+        :rtype: int
+        """
+        from collections import Counter
+        from functools import lru_cache
+
+        hand_count = Counter(hand)
+
+        def remove_groups(board):
+            while True:
+                new_board = []
+                i = 0
+
+                while i < len(board):
+                    j = i
+                    while j < len(board) and board[j] == board[i]:
+                        j += 1
+
+                    if j - i < 3:
+                        new_board.append(board[i:j])
+
+                    i = j
+
+                new_board = ''.join(new_board)
+
+                if new_board == board:
+                    return board
+
+                board = new_board
+
+        @lru_cache(None)
+        def dfs(board, counts):
+            if not board:
+                return 0
+
+            result = float('inf')
+            counts = list(counts)
+
+            i = 0
+            while i < len(board):
+                j = i
+
+                while j < len(board) and board[j] == board[i]:
+                    j += 1
+
+                color = board[i]
+                need = 3 - (j - i)
+
+                idx = colors.index(color)
+
+                if counts[idx] >= need:
+                    new_counts = counts[:]
+                    new_counts[idx] -= need
+
+                    new_board = remove_groups(
+                        board[:i] + board[j:]
+                    )
+
+                    next_result = dfs(
+                        new_board, tuple(new_counts)
+                    )
+
+                    if next_result != float('inf'):
+                        result = min(result, need + next_result)
+
+                i = j
+
+            return result
+
+        colors = sorted(hand_count.keys())
+        initial_counts = tuple(hand_count[c] for c in colors)
+
+        answer = dfs(board, initial_counts)
+
+        return answer if answer != float('inf') else -1
